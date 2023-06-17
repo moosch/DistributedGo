@@ -4,7 +4,7 @@ type ServiceName string
 
 type Registration struct {
 	ServiceName ServiceName
-	ServiceURL  string
+	ServicesURL string
 }
 
 const (

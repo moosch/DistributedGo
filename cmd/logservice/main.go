@@ -6,6 +6,7 @@ import (
 	stdlog "log"
 
 	"github.com/moosch/DistributedGo/log"
+	"github.com/moosch/DistributedGo/registry"
 	"github.com/moosch/DistributedGo/service"
 )
 
@@ -14,11 +15,16 @@ func main() {
 
 	// TODO(moosch): Pull this in from config file or env
 	host, port := "localhost", "4000"
+	serviceAddress := fmt.Sprintf("http://%v:%v", host, port)
+
+	var reg registry.Registration
+	reg.ServiceName = registry.LogService
+	reg.ServicesURL = serviceAddress
 
 	ctx, err := service.Start(
 		context.Background(),
-		"Log Service",
 		host, port,
+		reg,
 		log.RegisterHandlers,
 	)
 	if err != nil {

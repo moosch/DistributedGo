@@ -2,24 +2,25 @@ package registry
 
 import (
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"sync"
 )
 
+// TODO(moosch): Pull this in from config file or env
 const ServerPort = ":3000"
-
-// Root endpoint for service queries.
-const ServiceURL = "http://localhost" + ServerPort + "/services"
+const ServicesURL = "http://localhost" + ServerPort + "/services" // Root endpoint for service queries.
 
 // Create Registry
 
 type registry struct {
 	registrations []Registration
-	mutex         *sync.Mutex
+	mutex         *sync.RWMutex
 }
 
-var reg = registry{registrations: make([]Registration, 0), mutex: new(sync.Mutex)}
+var reg = registry{registrations: make([]Registration, 0), mutex: new(sync.RWMutex)}
 
 func (r *registry) add(reg Registration) error {
 	r.mutex.Lock()
@@ -27,6 +28,18 @@ func (r *registry) add(reg Registration) error {
 	r.mutex.Unlock()
 
 	return nil
+}
+
+func (r *registry) remove(url string) error {
+	for i := range r.registrations {
+		if r.registrations[i].ServicesURL == url {
+			r.mutex.Lock()
+			r.registrations = append(r.registrations[:i], r.registrations[i+1:]...)
+			r.mutex.Unlock()
+			return nil
+		}
+	}
+	return fmt.Errorf("service at URL %v not found", url)
 }
 
 // Create Registry Service
@@ -45,15 +58,29 @@ func (s RegistryService) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		log.Printf("Adding service: %v with URL: %v\n", r.ServiceName, r.ServiceURL)
+		log.Printf("Adding service: %v with URL: %v\n", r.ServiceName, r.ServicesURL)
 		err = reg.add(r)
 		if err != nil {
 			log.Println(err)
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
+	case http.MethodDelete:
+		payload, err := ioutil.ReadAll(req.Body)
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		url := string(payload)
+		log.Printf("Removing service at URL: %v", url)
+		err = reg.remove(url)
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
 	}
 }
