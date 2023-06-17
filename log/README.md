@@ -4,7 +4,7 @@ A super simple logger that accepts a string and appends to an `app.log` text fil
 
 ## Get started
 
-Build the log service using the [service handler](../service/)
+Build the log command service using the [service handler](../service/).
 
 ```shell
 go build ./cmd/logservice
