@@ -1,0 +1,8 @@
+# Damn Macs
+.DS_Store
+
+# Logging output
+app.log
+
+# Logging service executable
+logservice

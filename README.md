@@ -2,13 +2,34 @@
 
 A fairly simple example of a distributed system written entirely in Go.
 
-## About this project
-
 **NOTE:** Don't take this as a "best practice" for how distributes systems should be architected. This is more of a learning resource for the concepts. e.g. there's no containers for coordinated builds etc.
+
+For production ready distributed services tools, check out [Go-kit](https://gokit.io).
+
+For production ready web services, check out [Go Micro](https://go-micro.dev).
+
+## About this project
 
 The type is **Hybrid**, with a central **hub** service as a service registry with health monitoring. The rest of the services follow a peer-to-peer model, including logging and any business logic.
 
 The language is Go, with no frameworks, and communication is (initially) over HTTP with JSON as the protocol.
+
+### Main components
+
+**Service registry**
+- Service registration and de-registration.
+- Health monitoring.
+
+**Teacher portal**
+- Web application.
+- API Gateway.
+
+**Log service**
+- Centralized logging.
+
+**Grading service**
+- Business logic.
+- Data persistence (no database).
 
 ## Types of distributed systems
 
