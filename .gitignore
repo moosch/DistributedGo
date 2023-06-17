@@ -5,5 +5,7 @@
 app.log
 
 # Executables
-./logservice
-./registryservice
+logservice
+registryservice
+
+!cmd/*
