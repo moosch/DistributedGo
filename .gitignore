@@ -4,5 +4,6 @@
 # Logging output
 app.log
 
-# Logging service executable
-logservice
+# Executables
+./logservice
+./registryservice
