@@ -8,6 +8,29 @@ For production ready distributed services tools, check out [Go-kit](https://goki
 
 For production ready web services, check out [Go Micro](https://go-micro.dev).
 
+## Start it up
+
+Build the services.
+```shell
+go build ./cmd/registryservice
+go build ./cmd/logservice
+go build ./cmd/gradingservice
+go build ./cmd/teacherportalservice
+```
+
+Open 4 terminals. Run the following 4 commands, one in each terminal, making sure to start the `registryservice` first.
+
+```shell
+./registryservice
+./logservice
+./gradingservice
+./teacherportalservice
+```
+
+Notice that as the `logservice`, `gradingservice` and `teacherportalservice` start, they register with the `registryservice`, and dependant services become aware of their dependencies starting.
+
+Also note the heartbeat checks for service monitoring.
+
 ## About this project
 
 The type is **Hybrid**, with a central **hub** service as a service registry with health monitoring. The rest of the services follow a peer-to-peer model, including logging and any business logic.

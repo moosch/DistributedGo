@@ -14,6 +14,15 @@ import (
 
 // Used by service registry
 func RegisterService(r Registration) error {
+	heartbeatURL, err := url.Parse(r.HeartbeatURL)
+	if err != nil {
+		return err
+	}
+	// TODO(moosch): This could return request load status to inform load balancing.
+	http.HandleFunc(heartbeatURL.Path, func(w http.ResponseWriter, req *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
 	serviceUpdateURL, err := url.Parse(r.ServiceUpdateURL)
 	if err != nil {
 		return err

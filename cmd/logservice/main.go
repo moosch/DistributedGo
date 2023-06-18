@@ -23,6 +23,7 @@ func main() {
 	// Log service doesn't need any services.
 	reg.RequiredServices = make([]registry.ServiceName, 0)
 	reg.ServiceUpdateURL = reg.ServiceURL + "/services"
+	reg.HeartbeatURL = reg.ServiceURL + "/heartbeat"
 
 	ctx, err := service.Start(
 		context.Background(),
