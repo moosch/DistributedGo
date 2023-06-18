@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -27,7 +28,33 @@ func (r *registry) add(reg Registration) error {
 	r.registrations = append(r.registrations, reg)
 	r.mutex.Unlock()
 
-	return nil
+	return r.sendRequiredServices(reg)
+}
+
+func (r registry) sendPatch(p patch, url string) error {
+	d, err := json.Marshal(p)
+	if err != nil {
+		return err
+	}
+	_, err = http.Post(url, "application/json", bytes.NewBuffer(d))
+	// TODO(moosch): Add a status code check and if unsuccessful, attempt retry
+	return err
+}
+func (r registry) sendRequiredServices(reg Registration) error {
+	r.mutex.RLock()
+	defer r.mutex.RUnlock()
+	var p patch
+	for _, serviceReg := range r.registrations {
+		for _, requiredService := range reg.RequiredServices {
+			if serviceReg.ServiceName == requiredService {
+				p.Added = append(p.Added, patchEntry{
+					Name: serviceReg.ServiceName,
+					URL:  serviceReg.ServicesURL,
+				})
+			}
+		}
+	}
+	return r.sendPatch(p, reg.ServiceUpdateURL)
 }
 
 func (r *registry) remove(url string) error {

@@ -7,5 +7,6 @@ app.log
 # Executables
 logservice
 registryservice
+gradingservice
 
 !cmd/*

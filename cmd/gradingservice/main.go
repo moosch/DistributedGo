@@ -5,35 +5,39 @@ import (
 	"fmt"
 	stdlog "log"
 
+	"github.com/moosch/DistributedGo/grades"
 	"github.com/moosch/DistributedGo/log"
 	"github.com/moosch/DistributedGo/registry"
 	"github.com/moosch/DistributedGo/service"
 )
 
 func main() {
-	log.Run("app.log")
-
 	// TODO(moosch): Pull this in from config file or env
-	host, port := "localhost", "4000"
+	host, port := "localhost", "6000"
 	serviceAddress := fmt.Sprintf("http://%v:%v", host, port)
 
 	var reg registry.Registration
-	reg.ServiceName = registry.LogService
+	reg.ServiceName = registry.GradingService
 	reg.ServicesURL = serviceAddress
-	// Log service doesn't need any services.
-	reg.RequiredServices = make([]registry.ServiceName, 0)
+	reg.RequiredServices = []registry.ServiceName{registry.LogService}
 	reg.ServiceUpdateURL = reg.ServicesURL + "/services"
 
 	ctx, err := service.Start(
 		context.Background(),
 		host, port,
 		reg,
-		log.RegisterHandlers,
+		grades.RegisterHandlers,
 	)
 	if err != nil {
 		stdlog.Fatal(err)
 	}
+
+	if logProvider, err := registry.GetProvider(registry.LogService); err == nil {
+		fmt.Printf("Logging service was found at: %v\n", logProvider)
+		log.SetClientLogger(logProvider, reg.ServiceName)
+	}
+
 	// Only continues past here when the service errors or shuts down.
 	<-ctx.Done()
-	fmt.Println("Shutting down log service")
+	fmt.Println("Shutting down grading service")
 }
