@@ -8,5 +8,6 @@ app.log
 logservice
 registryservice
 gradingservice
+teacherportalservice
 
 !cmd/*
