@@ -4,7 +4,7 @@ type ServiceName string
 
 type Registration struct {
 	ServiceName      ServiceName
-	ServicesURL      string
+	ServiceURL       string
 	RequiredServices []ServiceName
 	ServiceUpdateURL string
 }

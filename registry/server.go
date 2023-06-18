@@ -12,7 +12,7 @@ import (
 
 // TODO(moosch): Pull this in from config file or env
 const ServerPort = ":3000"
-const ServicesURL = "http://localhost" + ServerPort + "/services" // Root endpoint for service queries.
+const ServiceURL = "http://localhost" + ServerPort + "/services" // Root endpoint for service queries.
 
 // Create Registry
 
@@ -28,7 +28,13 @@ func (r *registry) add(reg Registration) error {
 	r.registrations = append(r.registrations, reg)
 	r.mutex.Unlock()
 
-	return r.sendRequiredServices(reg)
+	err := r.sendRequiredServices(reg)
+	r.notify(patch{
+		Added: []patchEntry{
+			patchEntry{Name: reg.ServiceName, URL: reg.ServiceURL},
+		},
+	})
+	return err
 }
 
 func (r registry) sendPatch(p patch, url string) error {
@@ -40,6 +46,43 @@ func (r registry) sendPatch(p patch, url string) error {
 	// TODO(moosch): Add a status code check and if unsuccessful, attempt retry
 	return err
 }
+
+func (r registry) notify(fullPatch patch) {
+	r.mutex.RLock()
+	defer r.mutex.RUnlock()
+
+	// Check if any registrations need a service that's within fullPatch
+	for _, reg := range r.registrations {
+		go func(reg Registration) {
+			for _, reqService := range reg.RequiredServices {
+				p := patch{Added: []patchEntry{}, Removed: []patchEntry{}}
+				sendUpdate := false
+				for _, added := range fullPatch.Added {
+					if added.Name == reqService {
+						p.Added = append(p.Added, added)
+						sendUpdate = true
+					}
+				}
+				for _, removed := range fullPatch.Removed {
+					if removed.Name == reqService {
+						p.Removed = append(p.Removed, removed)
+						sendUpdate = true
+					}
+				}
+
+				if sendUpdate {
+					err := r.sendPatch(p, reg.ServiceUpdateURL)
+					if err != nil {
+						log.Println(err)
+						return
+					}
+				}
+			}
+		}(reg)
+	}
+	return
+}
+
 func (r registry) sendRequiredServices(reg Registration) error {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
@@ -49,7 +92,7 @@ func (r registry) sendRequiredServices(reg Registration) error {
 			if serviceReg.ServiceName == requiredService {
 				p.Added = append(p.Added, patchEntry{
 					Name: serviceReg.ServiceName,
-					URL:  serviceReg.ServicesURL,
+					URL:  serviceReg.ServiceURL,
 				})
 			}
 		}
@@ -59,12 +102,21 @@ func (r registry) sendRequiredServices(reg Registration) error {
 
 func (r *registry) remove(url string) error {
 	for i := range r.registrations {
-		if r.registrations[i].ServicesURL == url {
+		if r.registrations[i].ServiceURL == url {
+			r.notify(patch{
+				Removed: []patchEntry{
+					patchEntry{
+						Name: r.registrations[i].ServiceName,
+						URL:  r.registrations[i].ServiceURL,
+					},
+				},
+			})
 			r.mutex.Lock()
 			r.registrations = append(r.registrations[:i], r.registrations[i+1:]...)
 			r.mutex.Unlock()
 			return nil
 		}
+
 	}
 	return fmt.Errorf("service at URL %v not found", url)
 }
@@ -85,7 +137,7 @@ func (s RegistryService) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		log.Printf("Adding service: %v with URL: %v\n", r.ServiceName, r.ServicesURL)
+		log.Printf("Adding service: %v with URL: %v\n", r.ServiceName, r.ServiceURL)
 		err = reg.add(r)
 		if err != nil {
 			log.Println(err)

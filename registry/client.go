@@ -26,7 +26,7 @@ func RegisterService(r Registration) error {
 	if err != nil {
 		return err
 	}
-	res, err := http.Post(ServicesURL, "application/json", buf)
+	res, err := http.Post(ServiceURL, "application/json", buf)
 	if err != nil {
 		return err
 	}
@@ -53,12 +53,13 @@ func (suh serviceUpdateHandler) ServeHTTP(w http.ResponseWriter, req *http.Reque
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	fmt.Printf("Update received: %+v\n", p)
 	prov.Update(p)
 }
 
 // Used by service registry
 func ShutdownService(serviceURL string) error {
-	req, err := http.NewRequest(http.MethodDelete, ServicesURL, bytes.NewBuffer([]byte(serviceURL)))
+	req, err := http.NewRequest(http.MethodDelete, ServiceURL, bytes.NewBuffer([]byte(serviceURL)))
 	if err != nil {
 		return err
 	}

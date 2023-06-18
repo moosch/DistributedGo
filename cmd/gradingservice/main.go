@@ -18,9 +18,9 @@ func main() {
 
 	var reg registry.Registration
 	reg.ServiceName = registry.GradingService
-	reg.ServicesURL = serviceAddress
+	reg.ServiceURL = serviceAddress
 	reg.RequiredServices = []registry.ServiceName{registry.LogService}
-	reg.ServiceUpdateURL = reg.ServicesURL + "/services"
+	reg.ServiceUpdateURL = reg.ServiceURL + "/services"
 
 	ctx, err := service.Start(
 		context.Background(),

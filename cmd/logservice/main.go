@@ -19,10 +19,10 @@ func main() {
 
 	var reg registry.Registration
 	reg.ServiceName = registry.LogService
-	reg.ServicesURL = serviceAddress
+	reg.ServiceURL = serviceAddress
 	// Log service doesn't need any services.
 	reg.RequiredServices = make([]registry.ServiceName, 0)
-	reg.ServiceUpdateURL = reg.ServicesURL + "/services"
+	reg.ServiceUpdateURL = reg.ServiceURL + "/services"
 
 	ctx, err := service.Start(
 		context.Background(),
